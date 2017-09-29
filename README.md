@@ -1,37 +1,9 @@
-## Welcome to GitHub Pages
+## EFIgy
 
-You can use the [editor on GitHub](https://github.com/duo-labs/iCanHazFirmware/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+###Coming Soon! We're still squashing a bug or two and release it after Ekoparty 13 
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+The EFIgy API and related tools help you gain better visibility into the EFI environment on your Apple Mac systems and helps more easily identify out of date EFI firmware and vulnerabilities specific EFI versions may be vulnerable to.
 
-### Markdown
+There are also a lot of useful datasets within the EFIgy project that collate lots of hard to find infomration about things like Apple EFI versions and Board-ID's etc.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/duo-labs/iCanHazFirmware/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+Check back and the code will be hear before you know it! Until then check out the technical paper we released [here](https://duo.com/blog/the-apple-of-your-efi-mac-firmware-security-research)
