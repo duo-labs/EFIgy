@@ -15,7 +15,7 @@ more will be coming so keep checking back. We will announce updates on Twitter w
 
 The code works but will be cleaned up further in future, there may well be some bugs (it's a v0.2 'post-Ekoparty #13 very tired release' version for a reason!) so if you find any please let us know and we'll fix them as quickly as we can.
  
-###How does it work?
+### How does it work?
 
 It is a pretty straight forward Python 2.7 client, invoke it with either `python EFIgyLite_cli.py` or just `./EFIgyLite_cli.py`. If you do not have the `certifi` python module installed then make sure you also 
 grab the `cacert.pem` file and have it in the same directory as the `EFIgyLite_cli.py` script otherwise requests to the API will likely fail with SSL errors. There are currently a small number of command line options
@@ -31,7 +31,7 @@ into the space of getting the most comprehensive set of Apple EFI version inform
 **The client works entirely in userspace and does not touch the system's EFI firmware at all, it just grabs some version numbers and sends them to the API so as we can make the prediction of what version of
 EFI you should probably be running, and if you find you are deviating from the expected version making you aware so as you can update.**
 
-###Limitations
+### Limitations
 
 Currently the EFIgy API only supports OS X/macOS versions 10.10, 10.11 and 10.12 as they were the versions researched and are what our datasets currently comprise. An update to support macOS 10.13 will be released shortly once we have the 
 datasets collected and verified.
