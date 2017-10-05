@@ -266,7 +266,8 @@ class EFIgyCli(object):
         self.message("Enumerated system informaton (This data will be sent to the API in order to determine your correct EFI version): ")
 
         ##Get  Mac model ID, EFI & SMC ROM versions
-        sp_xml = Popen(["system_profiler", "-xml", "SPHardwareDataType"], stdout=PIPE).communicate()[0]
+        devnull = open(os.devnull, 'wb')
+        sp_xml = Popen(["system_profiler", "-xml", "SPHardwareDataType"], stdout=PIPE, stderr=devnull).communicate()[0]
         self.hw_version  = readPlistFromString(sp_xml)[0]["_items"][0]["machine_model"]
         self.rom_version = readPlistFromString(sp_xml)[0]["_items"][0]["boot_rom_version"]
         self.smc_version = readPlistFromString(sp_xml)[0]["_items"][0]['SMC_version_system']
