@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/python
 #-----------------------------------------------------------
 # Filename      : EFIgyLite_cli.py
 #
@@ -9,6 +9,7 @@
 #
 # Created By    : Rich Smith (@iodboi)
 # Date Created  : 3-Oct-2017 18:03
+# Date Updated  : 6-Oct-2017 15:53
 #
 # Version       : 0.2 (post-Ekoparty #13 very tired release)
 #
@@ -45,6 +46,21 @@ if int(platform.mac_ver()[0][3:5]) >= 13:
     print "[!] Unsupported version of macOS detected '%s'. %s currently only supports 10.10.x-10.12.x"%(platform.mac_ver()[0], NAME)
     print "Exiting ....."
     sys.exit(1)
+
+##Mac specific imports needed for direct Obj-C calls to get EFI & Board-ID's
+## rather using iokit / system_profiler - Thanks to Piker-Alpha for the pointers on this. See their code here:
+## https://github.com/Piker-Alpha/HandyScripts/blob/master/efiver.py & issue https://github.com/duo-labs/EFIgy/issues/8
+import objc
+from Foundation import NSBundle
+IOKitBundle = NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
+functions = [
+ ("IOServiceGetMatchingService", b"II@"),
+ ("IOServiceMatching", b"@*"),
+ ("IORegistryEntryFromPath", b"II*"),
+ ("IORegistryEntryCreateCFProperty", b"@I@@I")
+]
+objc.loadBundleFunctions(IOKitBundle, globals(), functions)
+
 
 ##Get absolute path of where this module is executing from
 MODULE_LOCATION = os.path.abspath(os.path.dirname(__file__))
@@ -266,18 +282,17 @@ class EFIgyCli(object):
         self.message("Enumerated system informaton (This data will be sent to the API in order to determine your correct EFI version): ")
 
         ##Get  Mac model ID, EFI & SMC ROM versions
-        devnull = open(os.devnull, 'wb')
-        sp_xml = Popen(["system_profiler", "-xml", "SPHardwareDataType"], stdout=PIPE, stderr=devnull).communicate()[0]
-        self.hw_version  = readPlistFromString(sp_xml)[0]["_items"][0]["machine_model"]
-        self.rom_version = readPlistFromString(sp_xml)[0]["_items"][0]["boot_rom_version"]
-        self.smc_version = readPlistFromString(sp_xml)[0]["_items"][0]['SMC_version_system']
+        self.hw_version  = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice")), "model", None, 0)).replace("\x00", "")
+        self.smc_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("AppleSMC")),"smc-version", None, 0))
+        raw_efi = str(IORegistryEntryCreateCFProperty(IORegistryEntryFromPath(0, "IODeviceTree:/rom"), "version", None, 0)).replace("\x00", "").split(".")
+        self.efi_version = "%s.%s.%s" % (raw_efi[0], raw_efi[2], raw_efi[3])
 
         ##We like the uniqueness of the platforms UUID but we want to preserve privacy - hash it with salt to psuedononymise
-        self.h_sys_uuid  = hashlib.sha256(self.salt + readPlistFromString(sp_xml)[0]["_items"][0]["platform_UUID"]).hexdigest()
+        sys_uuid = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice")), "IOPlatformUUID", None, 0)).replace("\x00", "")
+        self.h_sys_uuid = hashlib.sha256(self.salt + sys_uuid).hexdigest()
 
         ##Get the Board-ID, this is how EFI files are matched to running hardware - Nastee
-        io_reg = [a.strip() for a in commands.getoutput('ioreg -p "IODeviceTree" -r -n / -d 1').split("\n") if "board-id" in a][0]
-        self.board_id = io_reg[io_reg.find("<") + 2:io_reg.find(">") - 1]
+        self.board_id = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice")), "board-id", None, 0)).replace("\x00", "")
 
         ## Get OS version
         self.os_version = commands.getoutput("sw_vers -productVersion")
@@ -290,7 +305,7 @@ class EFIgyCli(object):
 
         self.message("\tHashed SysUUID   : %s" % (self.h_sys_uuid))
         self.message("\tHardware Version : %s" % (self.hw_version))
-        self.message("\tBoot ROM Version : %s" % (self.rom_version))
+        self.message("\tEFI Version      : %s" % (self.efi_version))
         self.message("\tSMC Version      : %s" % (self.smc_version))
         self.message("\tBoard-ID         : %s" % (self.board_id))
         self.message("\tOS Version       : %s" % (self.os_version))
@@ -313,7 +328,7 @@ class EFIgyCli(object):
         :return:
         """
         endpoint = "/apple/oneshot"
-        data_to_submit = {"hashed_uuid":self.h_sys_uuid, "hw_ver":self.hw_version, "rom_ver":self.rom_version,
+        data_to_submit = {"hashed_uuid":self.h_sys_uuid, "hw_ver":self.hw_version, "rom_ver":self.efi_version,
                           "smc_ver":self.smc_version, "board_id":self.board_id, "os_ver":self.os_version, "build_num":self.build_num}
 
         ##POST this data to the API to get relevant info back
@@ -397,10 +412,10 @@ class EFIgyCli(object):
         if self._validate_response(self.results["latest_efi_version"]):
 
             ##Valid response from API - now interpret it
-            if self.results["latest_efi_version"]["msg"] == self.rom_version:
-                self.message("\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s" % (self.rom_version, self.build_num, self.hw_version))
+            if self.results["latest_efi_version"]["msg"] == self.efi_version:
+                self.message("\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s" % (self.efi_version, self.build_num, self.hw_version))
             else:
-                self.message("\t[-] ATTENTION - You are running an unexpected firmware version given the model of your system (%s) and OS build you have installed (%s). Your firmware %s, expected firmware %s.\nUpdate your firmware!!" % (self.hw_version, self.build_num, self.rom_version, self.results["latest_efi_version"]["msg"]))
+                self.message("\t[-] ATTENTION - You are running an unexpected firmware version given the model of your system (%s) and OS build you have installed (%s). Your firmware is %s, the firmware we expected to see is %s.\n" % (self.hw_version, self.build_num, self.efi_version, self.results["latest_efi_version"]["msg"]))
 
     def cleanup(self):
         """
