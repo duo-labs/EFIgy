@@ -110,7 +110,7 @@ class EFIgyCli(object):
         self.last_response = None
 
         ##Set the salt to be the MAC address of the system, using the MAC as a salt in this manner
-        ## helps ensure that the hashed sysuuid is psuedononymous. We don't want to know the sysuuid's
+        ## helps ensure that the hashed sysuuid is pseudonymous. We don't want to know the sysuuid's
         ## value, but we do want it to be unique however. The Salt value is never submitted to the API
         self.salt = hex(getnode())
 
@@ -382,7 +382,7 @@ class EFIgyCli(object):
         :return:
         """
         if not self.results.get("efi_updates_released"):
-            ##Call the API to see what the latest version of EFI you are expected to be runnign given OS ver and mac model
+            ##Call the API to see what the latest version of EFI you are expected to be running given OS ver and mac model
             self.results["efi_updates_released"] = self.__make_api_get('/apple/no_firmware_updates_released/%s' % (self.hw_version))
 
         ##Validate response from API
@@ -403,7 +403,7 @@ class EFIgyCli(object):
         :return:
         """
         if not self.results.get("latest_efi_version"):
-            ##Call the API to see what the latest version of EFI you are expected to be runnign given OS ver and mac model
+            ##Call the API to see what the latest version of EFI you are expected to be running given OS ver and mac model
             self.results["latest_efi_version"] = self.__make_api_get('/apple/latest_efi_firmware/%s/%s' % (self.hw_version, self.build_num))
 
         self.message("\nEFI firmware version check:")
