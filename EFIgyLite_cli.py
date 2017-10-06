@@ -128,7 +128,7 @@ class EFIgyCli(object):
                 os.stat(self.cacert_path)
                 logger.debug("[+] cacert file location: '%s'" % (self.cacert_path))
             except OSError:
-                logger.debug("[-] Local cacert.pem file not found at location '%s'. Please check this location or pip install certifi."%(self.cacert_path))
+                print "[-] Local cacert.pem file not found at location '%s'. Please check this location or pip install certifi."%(self.cacert_path)
                 raise
 
 
