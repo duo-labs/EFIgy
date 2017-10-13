@@ -12,7 +12,7 @@ released at [Ekoparty #13](https://ekoparty.org) on September 29th and discussed
 
 If you just want to test one off systems then there is now a convenient little webapp to test systems with.
 
-Go to [https://check.efigy.io]() and see what it tells you.
+Go to [https://check.efigy.io](https://check.efigy.io) and see what it tells you.
 
 If you ware wanting to check multiple systems or interface with efigy programatically you are much better to use the EFIgy client in this repo or call the RESTful API directly.
 
