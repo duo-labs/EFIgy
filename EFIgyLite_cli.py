@@ -9,7 +9,7 @@
 #
 # Created By    : Rich Smith (@iodboi)
 # Date Created  : 3-Oct-2017 18:03
-# Date Updated  : 13-Oct-2017 18:05
+# Date Updated  : 13-Oct-2017 18:06
 #
 # Version       : 0.2 (post-Ekoparty #13 very tired release)
 #
@@ -18,7 +18,7 @@
 
 
 NAME     = "EFIgyLite_cli"
-VERSION  = "0.3"
+VERSION  = "0.2"
 CODE_URL = "https://efigy.io"
 
 import os
