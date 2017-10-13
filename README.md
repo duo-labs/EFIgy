@@ -7,6 +7,16 @@ EFIgy is a RESTful API and client that helps Apple Mac users determine if they a
 This small tool is part of the output from _'The Apple of your EFI'_ research by Pepijn Bruienne ([@bruienne](https://twitter.com/bruienne)) and Rich Smith ([@iodboi](https://twitter.com/iodboi)) 
 released at [Ekoparty #13](https://ekoparty.org) on September 29th and discussed in this [blogpost](https://duo.com/blog/the-apple-of-your-efi-mac-firmware-security-research) and this [technical paper](https://t.co/GarDxCwQrw).
 
+
+### [NEW] What's the quickest way for me to play with it?
+
+If you just want to test one off systems then there is now a convenient little webapp to test systems with.
+
+Go to [https://check.efigy.io]() and see what it tells you.
+
+If you ware wanting to check multiple systems or interface with efigy programatically you are much better to use the EFIgy client in this repo or call the RESTful API directly.
+
+
 ### How come it says EFIgy Lite ?
 
 This is the first release of a larger set of code, apps, and datasets coming from the research and is a subset of the final functionality. Rather than wait until everything has finalised and is ready for release

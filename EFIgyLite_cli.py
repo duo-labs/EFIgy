@@ -18,7 +18,7 @@
 
 
 NAME     = "EFIgyLite_cli"
-VERSION  = "0.2"
+VERSION  = "0.3"
 CODE_URL = "https://efigy.io"
 
 import os
@@ -449,8 +449,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.WARNING)
 
     try:
-        ##Prod Lite API server
-        efigy_cli = EFIgyCli("https://w2fknz32ig.execute-api.us-west-2.amazonaws.com/api/", quiet=args.quiet, debug=args.debug, log_path=args.log)
+        efigy_cli = EFIgyCli("https://api.efigy.io", quiet=args.quiet, debug=args.debug, log_path=args.log)
         efigy_cli()
         print "\n"
 
