@@ -9,7 +9,7 @@
 #
 # Created By    : Rich Smith (@iodboi)
 # Date Created  : 3-Oct-2017 18:03
-# Date Updated  : 22-Nov-2017 11:29
+# Date Updated  : 22-Nov-2017 17:13
 #
 # Version       : 0.3 (pre-Turkey Day release)
 #
@@ -526,12 +526,31 @@ class EFIgyCli(object):
 
         self.message("\n\tEFI firmware version check:")
 
+
+
+
         ##Validate response from API
         if self._validate_response(api_results["latest_efi_version"]):
-
             ##Valid response from API - now interpret it
-            if api_results["latest_efi_version"]["msg"] == sys_info.get("rom_ver"):
-                self.message("\t\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s" % (sys_info.get("rom_ver"), sys_info.get("build_num"), sys_info.get("hw_ver")))
+
+            ##This is kind messy but it's so as we can detect newer and older firmware and message accordingly rather than just looking for 'different' versions
+            ## the way that EFI versions are denoted by Apple makes this more of a pain thatit really needs to be quite honestly
+            api_efi_str =  api_results["latest_efi_version"]["msg"].split(".")
+            api_efi_ver = int(api_efi_str[1])
+            api_efi_build = int(api_efi_str[2].replace("B",""))
+
+            my_efi_str  = sys_info.get("rom_ver").split(".")
+            my_efi_ver = int(my_efi_str[1])
+            my_efi_build = int(my_efi_str[2].replace("B", ""))
+
+
+            if api_efi_str == my_efi_str:
+                self.message("\t\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s"%(sys_info.get("rom_ver"), sys_info.get("build_num"), sys_info.get("hw_ver")))
+
+            elif (my_efi_ver > api_efi_ver) or (my_efi_ver > api_efi_ver and my_efi_build > api_efi_build) or (my_efi_ver == api_efi_ver and my_efi_build > api_efi_build):
+                ##Looks like you're running a beta or a dev build - pretty much all bets are off here as the dataset doens't cover dev builds but a nicer message makes sense
+                self.message("\t\t[!] ATTENTION - It looks like your EFI version (%s) is NEWER than the latest production release that is in the dataset (%s). This is most likely because you are now, or have in the past, installed a developer preview OS and as part of that you also had newer EFI firmware installed. The EFIgy API currently only has reliable data for production OS releases."%(sys_info.get("rom_ver"), api_results["latest_efi_version"]["msg"]))
+
             else:
                 self.message("\t\t[-] ATTENTION - You are running an unexpected firmware version given the model of your system (%s) and OS build you have installed (%s). Your firmware is %s, the firmware we expected to see is %s.\n" % (sys_info.get("hw_ver"), sys_info.get("build_num"), sys_info.get("rom_ver"), api_results["latest_efi_version"]["msg"]))
 
