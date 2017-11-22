@@ -8,6 +8,115 @@ This small tool is part of the output from _'The Apple of your EFI'_ research by
 released at [Ekoparty #13](https://ekoparty.org) on September 29th and discussed in this [blogpost](https://duo.com/blog/the-apple-of-your-efi-mac-firmware-security-research) and this [technical paper](https://t.co/GarDxCwQrw).
 
 
+### [NEW] Support for 10.13.x
+
+Finally there is the data for EFI versions in macOS 10.13.x in the API server so now you can check your versions for newer systems as well.
+The client and server also more gracefully handle situations where the system is using a beta/dev build of the OS.
+
+### [NEW] Batch mode
+
+EFIgy now supports a batch mode allowing you to split the collection of data from a fleet of Macs and the submission of that data to the API into two distinct steps. 
+This means you can more easily make use of whatever your favorite config management solution is (osquery, chef, puppet etc) to gether the required data from endpoints, package that into a simple JSON format and then have the EFIgy client submit the data from each of the endpoints to the API and get the results.
+
+To use batch mode do the following:
+
+```
+$ python ./EFIgyLite_cli.py -b path_to_json_input.json
+```
+
+Where `path_to_json_input.json` is the file containing the json representation of the endpoint systems information.
+
+The format of the json input file is as follows:
+
+```
+{"1.2.3.4":
+          {"board_id": "Mac-66E35819EE2D0D05",
+            "smc_ver": "2.37f20",
+            "build_num": "16G29",
+            "rom_ver": "MBP132.0226.B25",
+            "hw_ver": "MacBookPro13,2",
+            "os_ver": "10.12.6",
+            "sys_uuid": "12345678-1234-1234-1234-1234567890AB",
+            "mac_addr": "b4:bf:b4:b1:b6:bc"},
+
+  "a_mac_host.local":
+          {"board_id": "Mac-66E35819EE2D0D05",
+            "smc_ver": "2.37f21",
+            "build_num": "16G07",
+            "rom_ver": "MBP132.0226.B20",
+            "hw_ver": "MacBookPro12,1",
+            "os_ver": "10.12.4",
+            "sys_uuid": "12345678-1234-1234-1234-1234567890CD",
+            "mac_addr": "a4:af:a4:a1:a6:ac"}
+
+}
+
+```
+
+With new key-value pairs for each endpoint that an API lookup is required for.
+
+Each of the elements is explained below:
+
+* `<ip_addr/hostname>` - The key to each dictionary is a unique identifier for an endpoint, most usually the IP address or hostname but you can use whatever you like. This value is for your own reference and is not sent to the API.
+* `board_id` - This is the board ID of the endpoint and should start with the `Mac-` prefix
+* `smc_ver` - This is the version of the SMC ROM on the endpoint
+* `build_num` - This is the OS build number that is running on the endpoitn
+* `rom_ver` - This is the EFI ROM version that is running on the endpoint
+* `hw_ver` - This is the Mac model of the endpoint, in Apple longhand format e.g. `MacBookPro13,2`
+* `os_ver` - This is friendly OS version running on the endpoint in Major/Minor/Micro format e.g. `10.12.6` (NOTE: will be deprecated in future)
+* `sys_uuid` - This is the system UUID of the endpoint. *IMPORTANT:* This value is psuedononymised by the EFIgy client *before* being sent to the API. The psuedononymisation takes the form of a salted hash as described in the readme below. The real system UUID is *not* submitted to the API.
+* `mac_addr` - This is the MAC address of the endpoint, this is purely used as a salt for the psuedononymisation of the system UUID. The MAC address is *not* submitted to the API.
+
+There is an example batch jason file in the repo named `batch_input_example.json`
+
+
+The use of batch mode means system administrators can more easily check large sets of endpoints against the endpoints and not have multiple systems making outbound requests to the API.
+
+### [NEW] Output and save results in JSON format
+
+It is now possible to have the results from the EFIgy API represented in JSON format to more easily save and parse the results that come back from the API.
+
+To have the results represented in JSON format use the `-j` switch as shown below:
+
+```
+$ python ./EFIgyLite_cli.py -j /tmp/my_results.json
+
+```
+
+Where `/tmp/my_results.json` is the file you want the results written to.
+
+If you would like the JSON results written to stdout use `-` as the path:
+
+```
+$ python ./EFIgyLite_cli.py -j -
+
+```
+
+If you would like to supress all other output and just have the JSON formatted results out use `-j -` in combination with the `-q` (quiet) switch:
+
+```
+$ python ./EFIgyLite_cli.py -q -j -
+
+```
+
+How you choose to process the json formatted results from here is up to you, but you have the full response from the API for each endpoint that was queried.
+
+
+### [NEW] Specify path of cacert.pem file
+
+Simple additon of the `-c` switch to allow the path of a cacert file to be specified directly. Under normal circumstances this shouldn't be needed as either the `certifi` will be used, or the `cacert.pem` file in this repo if the `certifi` module is not present.
+ 
+To use a specific `cacert.pem` of your choosing simply do:
+
+```
+$ python ./EFIgyLite_cli.py -c /tmp/my_special_cacert.pem
+
+```
+
+Where `/tmp/my_special_cacert.pem` is the path to the `cacert.pem` file that you want to use.
+
+If the `-c` switch is used then the supplied `cacert.pem` will override whatever file is returned by the `certifi` module.
+
 ### [NEW] What's the quickest way for me to play with it?
 
 If you just want to test one off systems then there is now a convenient little webapp to test systems with.
@@ -15,6 +124,11 @@ If you just want to test one off systems then there is now a convenient little w
 Go to [https://check.efigy.io](https://check.efigy.io) and see what it tells you.
 
 If you ware wanting to check multiple systems or interface with efigy programatically you are much better to use the EFIgy client in this repo or call the RESTful API directly.
+
+
+### [NEW] EFIgy GUI
+
+There is now a GUI client for the EFIgy API which can be found [here](https://github.com/duo-labs/EFIgy-GUI)
 
 
 ### How come it says EFIgy Lite ?
@@ -43,11 +157,7 @@ EFI you should probably be running, and if you find you are deviating from the e
 
 ### Limitations
 
-Currently the EFIgy API only supports OS X/macOS versions 10.10, 10.11 and 10.12 as they were the versions researched and are what our datasets currently comprise. An update to support macOS 10.13 will be released shortly once we have the 
-datasets collected and verified.
-
-Another limitation is that this client is currenlty aimed at sysadmins / technical users rather than a more typical home user of a Mac. A simpler webapp version that uses the same backend EFIgy API will be released soon to allow home users
-to more easily check their EFI versions on a one off basis.
+A current limitation is that this client is currenlty aimed at sysadmins / technical users rather than a more typical home user of a Mac. For home users to check their Mac's on a one off basis then either use the webapp [https://check.efigy.io]() or use the EFIgy-GUI app [https://github.com/duo-labs/EFIgy-GUI](). 
 
 ## Example output
 

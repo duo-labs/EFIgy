@@ -1,0 +1,21 @@
+{"1.2.3.4":
+          {"board_id": "Mac-66E35819EE2D0D05",
+            "smc_ver": "2.37f20",
+            "sys_uuid": "3721AD77-D2C2-5550-BE64-060CB2042548",
+            "build_num": "16G1036",
+            "rom_ver": "MBP132.0226.B25",
+            "hw_ver": "MacBookPro13,2",
+            "os_ver": "10.12.6",
+            "mac_addr": "f4:0f:24:21:26:ec"},
+
+  "5.6.7.8":
+          {"board_id": "Mac-66E35819EE2D0D05",
+            "smc_ver": "2.37f21",
+            "sys_uuid": "4441AD77-D2C2-5550-BE64-060CB2042548",
+            "build_num": "16G07",
+            "rom_ver": "MBP132.0226.B20",
+            "hw_ver": "MacBookPro12,1",
+            "os_ver": "10.12.4",
+            "mac_addr": "A4:Af:A4:A1:A6:Ac"}
+
+}
