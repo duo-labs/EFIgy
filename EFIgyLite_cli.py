@@ -9,9 +9,9 @@
 #
 # Created By    : Rich Smith (@iodboi)
 # Date Created  : 3-Oct-2017 18:03
-# Date Updated  : 22-Nov-2017 17:13
+# Date Updated  : 23-Nov-2017 17:51
 #
-# Version       : 0.3 (pre-Turkey Day release)
+# Version       : 0.3 (Turkey Day release)
 #
 # License       : BSD 3-Clause
 #-----------------------------------------------------------
@@ -527,8 +527,6 @@ class EFIgyCli(object):
         self.message("\n\tEFI firmware version check:")
 
 
-
-
         ##Validate response from API
         if self._validate_response(api_results["latest_efi_version"]):
             ##Valid response from API - now interpret it
@@ -536,11 +534,11 @@ class EFIgyCli(object):
             ##This is kind messy but it's so as we can detect newer and older firmware and message accordingly rather than just looking for 'different' versions
             ## the way that EFI versions are denoted by Apple makes this more of a pain thatit really needs to be quite honestly
             api_efi_str =  api_results["latest_efi_version"]["msg"].split(".")
-            api_efi_ver = int(api_efi_str[1])
+            api_efi_ver = int(api_efi_str[1], 16)
             api_efi_build = int(api_efi_str[2].replace("B",""))
 
             my_efi_str  = sys_info.get("rom_ver").split(".")
-            my_efi_ver = int(my_efi_str[1])
+            my_efi_ver = int(my_efi_str[1], 16)
             my_efi_build = int(my_efi_str[2].replace("B", ""))
 
 
