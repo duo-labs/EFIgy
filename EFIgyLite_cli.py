@@ -543,11 +543,11 @@ class EFIgyCli(object):
             ## the way that EFI versions are denoted by Apple makes this more of a pain thatit really needs to be quite honestly
             api_efi_str =  api_results["latest_efi_version"]["msg"].split(".")
             api_efi_ver = int(api_efi_str[1], 16)
-            api_efi_build = int(api_efi_str[2].replace("B",""))
+            api_efi_build = int(api_efi_str[2].replace("B",""), 16)
 
             my_efi_str  = sys_info.get("rom_ver").split(".")
             my_efi_ver = int(my_efi_str[1], 16)
-            my_efi_build = int(my_efi_str[2].replace("B", ""))
+            my_efi_build = int(my_efi_str[2].replace("B", ""), 16)
 
             if api_efi_str == my_efi_str:
                 self.message("\t\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s"%(sys_info.get("rom_ver"), sys_info.get("build_num"), sys_info.get("hw_ver")))
