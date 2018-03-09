@@ -7,13 +7,39 @@ EFIgy is a RESTful API and client that helps Apple Mac users determine if they a
 This small tool is part of the output from _'The Apple of your EFI'_ research by Pepijn Bruienne ([@bruienne](https://twitter.com/bruienne)) and Rich Smith ([@iodboi](https://twitter.com/iodboi)) 
 released at [Ekoparty #13](https://ekoparty.org) on September 29th and discussed in this [blogpost](https://duo.com/blog/the-apple-of-your-efi-mac-firmware-security-research) and this [technical paper](https://t.co/GarDxCwQrw).
 
+### \[NEW\] EFI check only
 
-### [NEW] Support for 10.13.x
+A new commandline option is now available to show the use of the new API endpoint that just checks whether your EFI version is up to date, older or newer than the expected version.
+To use this new API simply use the `-o` (`--only-efi`) option`:
+
+```
+$ ./EFIgyLite_cli.py -o
+...
+<snipped for brevity>
+...
+Your firmware version MBP132.0233.B00 is the expected one for a MacBookPro13,2 running build 17D102. Smile, today is a good day :-)
+```
+
+The API endpoint being called is `/apple/up2date/{mac_model_code}/{build_number/{efi_version}` and it will return a json message in the standard format containing one of the following message bodies:
+
+* `up2date` - Indicates that the supplied EFI version is the one that is expected for the supplied combination of Mac model and OS build number.
+* `outofdate` - Indicates that the supplied EFI version is older than expected for the supplied combination of Mac model and OS build number.
+* `newer` - Indicates that the supplied EFI version is the newer than expected for the supplied combination of Mac model and OS build number. This could be because the system previously had a beta or pre-release version of macOS installed and then downgraded to a stable OS version that shipped with older EFI firmware.
+* `model_unknown` - Indicates the supplied Mac model was not one in the EFIgy Server dataset, or is in an incorrect format (use Mac model ID's in this format `MacBookPro13,2`).
+* `build_unknown` - Indicates the supplied OS build was not one in the EFIgy Server dataset.
+
+For example the json returned from this endpoint would look like:
+
+```
+{"msg": "up2date"}
+```
+
+### Support for 10.13.x
 
 Finally there is the data for EFI versions in macOS 10.13.x in the API server so now you can check your versions for newer systems as well.
 The client and server also more gracefully handle situations where the system is using a beta/dev build of the OS.
 
-### [NEW] Batch mode
+### Batch mode
 
 EFIgy now supports a batch mode allowing you to split the collection of data from a fleet of Macs and the submission of that data to the API into two distinct steps. 
 This means you can more easily make use of whatever your favorite config management solution is (osquery, chef, puppet etc) to gether the required data from endpoints, package that into a simple JSON format and then have the EFIgy client submit the data from each of the endpoints to the API and get the results.
@@ -72,7 +98,7 @@ There is an example batch jason file in the repo named `batch_input_example.json
 
 The use of batch mode means system administrators can more easily check large sets of endpoints against the endpoints and not have multiple systems making outbound requests to the API.
 
-### [NEW] Output and save results in JSON format
+### Output and save results in JSON format
 
 It is now possible to have the results from the EFIgy API represented in JSON format to more easily save and parse the results that come back from the API.
 
@@ -102,7 +128,7 @@ $ python ./EFIgyLite_cli.py -q -j -
 How you choose to process the json formatted results from here is up to you, but you have the full response from the API for each endpoint that was queried.
 
 
-### [NEW] Specify path of cacert.pem file
+### Specify path of cacert.pem file
 
 Simple additon of the `-c` switch to allow the path of a cacert file to be specified directly. Under normal circumstances this shouldn't be needed as either the `certifi` will be used, or the `cacert.pem` file in this repo if the `certifi` module is not present.
  
@@ -117,7 +143,7 @@ Where `/tmp/my_special_cacert.pem` is the path to the `cacert.pem` file that you
 
 If the `-c` switch is used then the supplied `cacert.pem` will override whatever file is returned by the `certifi` module.
 
-### [NEW] What's the quickest way for me to play with it?
+### What's the quickest way for me to play with it?
 
 If you just want to test one off systems then there is now a convenient little webapp to test systems with.
 
@@ -126,7 +152,7 @@ Go to [https://check.efigy.io](https://check.efigy.io) and see what it tells you
 If you ware wanting to check multiple systems or interface with efigy programatically you are much better to use the EFIgy client in this repo or call the RESTful API directly.
 
 
-### [NEW] EFIgy GUI
+### EFIgy GUI
 
 There is now a GUI client for the EFIgy API which can be found [here](https://github.com/duo-labs/EFIgy-GUI)
 

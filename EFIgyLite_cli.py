@@ -9,9 +9,9 @@
 #
 # Created By    : Rich Smith (@iodboi)
 # Date Created  : 3-Oct-2017 18:03
-# Date Updated  : 23-Nov-2017 17:51
+# Date Updated  : 1-Mar-2018 22:07
 #
-# Version       : 0.3 (Turkey Day release)
+# Version       : 0.4
 #
 # License       : BSD 3-Clause
 #-----------------------------------------------------------
@@ -85,7 +85,7 @@ class EFIgyCliError(Exception):
 class EFIgyCli(object):
 
 
-    def __init__(self, api_server_url, quiet=False, debug=False, log_path="", json_results="", batch_json_path="", cacert_path=""):
+    def __init__(self, api_server_url, quiet=False, debug=False, log_path="", json_results="", batch_json_path="", cacert_path="", only_efi=False):
 
         ##Display options
         self.quiet = quiet
@@ -144,6 +144,8 @@ class EFIgyCli(object):
             print "[-] Local cacert.pem file not found at location '%s'. Please check this location or pip install certifi."%(os.path.abspath(self.cacert_path))
             raise
 
+        ##Are we requesting server side compare of EFI only?
+        self.only_efi = only_efi
 
 
     def message(self, data, newline="\n"):
@@ -354,6 +356,12 @@ class EFIgyCli(object):
                         self.cleanup()
                         return False
 
+                ##Are we requesting server side compare of efi version only rather than the whole shebang?
+                if self.only_efi:
+                    self.check_server_side_efi_only(sys_info)
+                    continue
+
+
                 ##Send the datas to the API
                 api_results = self.submit_system_data(sys_info)
                 self.results[self.current_endpoint] = api_results
@@ -541,7 +549,6 @@ class EFIgyCli(object):
             my_efi_ver = int(my_efi_str[1], 16)
             my_efi_build = int(my_efi_str[2].replace("B", ""))
 
-
             if api_efi_str == my_efi_str:
                 self.message("\t\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s"%(sys_info.get("rom_ver"), sys_info.get("build_num"), sys_info.get("hw_ver")))
 
@@ -551,6 +558,35 @@ class EFIgyCli(object):
 
             else:
                 self.message("\t\t[-] ATTENTION - You are running an unexpected firmware version given the model of your system (%s) and OS build you have installed (%s). Your firmware is %s, the firmware we expected to see is %s.\n" % (sys_info.get("hw_ver"), sys_info.get("build_num"), sys_info.get("rom_ver"), api_results["latest_efi_version"]["msg"]))
+
+
+    def check_server_side_efi_only(self, sys_info):
+        """
+        Just get an EFI version comparison from the server, will return one of: up2date, newer, older, model_unknown, build_unknown
+        :return:
+        """
+
+        result_dict = self.__make_api_get("/apple/up2date/%s/%s/%s" % (sys_info.get("hw_ver"), sys_info.get("build_num"), sys_info.get("rom_ver")))
+
+        if self._validate_response(result_dict):
+
+            if result_dict["msg"] == "up2date":
+                self.message("\n\tYour firmware version %s is the expected one for a %s running build %s. Smile, today is a good day :-) "%(sys_info.get("rom_ver"), sys_info.get("hw_ver"), sys_info.get("build_num")))
+
+            elif result_dict["msg"] == "newer":
+                self.message("\n\tYour firmware version %s seems newer than expected for a %s running build %s. Perhaps a beta build of macOS was installed on this system at some point?"%(sys_info.get("rom_ver"), sys_info.get("hw_ver"), sys_info.get("build_num")))
+
+            elif result_dict["msg"] == "outofdate":
+                self.message("\n\tYour firmware version %s is older than expected for a %s running build %s. You should update your EFI firmware."%(sys_info.get("rom_ver"), sys_info.get("hw_ver"), sys_info.get("build_num")))
+
+            elif result_dict["msg"] == "model_unknown":
+                self.message("\n\tUnknown model of Mac supplied: %s"%(sys_info.get("hw_ver")))
+
+            elif result_dict["msg"] == "build_unknown":
+                self.message("\n\tUnknown OS build number supplied: %s" % (sys_info.get("build_num")))
+
+            else:
+                self.message("\n\tUnexpected response from the API server: '%s'. Please file an issue at %s and include this error message"%(result_dict, CODE_URL))
 
 
     def dump_json(self):
@@ -601,6 +637,7 @@ if __name__ == "__main__":
     parser.add_argument("-b", "--batch", help="Batch mode. The argument is a file containing a JSON structure as detailed in the README.")
     parser.add_argument("-c", "--cacert-path", help="Path to specify a cacert.pem file to use")
     parser.add_argument("-s", "--api-server", default=API_URL, help="URL of the EFIgy API server to use including the http:// or https:// prefix, this is mainly for testing")
+    parser.add_argument("-o", "--only-efi", action="store_true", default=False, help="Only check the supplied EFI version against the expected version from the API. Will return if the supplied EFI version is up to date, older or newer than expected in addition to alerting on unknown hardware and OS builds.")
     parser.add_argument("--debug",  action="store_true", default=False, help="Show verbose debugging output to stdout")
     parser.add_argument("-q", "--quiet",  action="store_true", default=False, help="Silence stdout output and don't ask to submit data to API. Use with the --log option")
     parser.add_argument("-v", "--version", action="store_true", default=False, help="Show client version")
@@ -619,7 +656,7 @@ if __name__ == "__main__":
 
     try:
         ##Connect to specified EFIgy API server
-        efigy_cli = EFIgyCli(args.api_server, quiet=args.quiet, debug=args.debug, log_path=args.log, json_results=args.json_output, batch_json_path=args.batch, cacert_path=args.cacert_path)
+        efigy_cli = EFIgyCli(args.api_server, quiet=args.quiet, debug=args.debug, log_path=args.log, json_results=args.json_output, batch_json_path=args.batch, cacert_path=args.cacert_path, only_efi=args.only_efi)
         efigy_cli()
 
         sys.exit(0)
