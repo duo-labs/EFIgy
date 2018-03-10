@@ -517,7 +517,7 @@ class EFIgyCli(object):
             #Check to see if this is a model that has seen any EFI firmware updates
             if api_results["efi_updates_released"]["msg"] == False:
                 self.message("\n\tEFI firmware version check:")
-                self.message("\t\t[-] ATTENTION - Your Mac model (%s) does not seem to have had any EFI updates released for it :'("%(sys_info.get("hw_ver")))
+                self.message("\t\t[-]ATTENTION - Your Mac model (%s) is older than the models Apple currently provides updates for, EFIgy has no data for it."%(sys_info.get("hw_ver")))
                 return False
             else:
                 return True
