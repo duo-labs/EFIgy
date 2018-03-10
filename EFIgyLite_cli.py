@@ -339,7 +339,7 @@ class EFIgyCli(object):
 
                 self.message("-"*self.term_width)
                 self.message("Endpoint: %s" % (self.current_endpoint))
-                self.message("\t# Enumerated system informaton (This data will be sent to the API in order to determine your correct EFI version):\n")
+                self.message("\t# Enumerated system information (This data will be sent to the API in order to determine your correct EFI version):\n")
                 self.message("\tHashed SysUUID   : %s" % (sys_info.get("hashed_uuid")))
                 self.message("\tHardware Version : %s" % (sys_info.get("hw_ver")))
                 self.message("\tEFI Version      : %s" % (sys_info.get("rom_ver")))
