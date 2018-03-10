@@ -217,6 +217,14 @@ Up-to-date OS check:
 
 ```
 
+### Requirements
+
+EFIgy requires [pyobjc](https://pythonhosted.org/pyobjc/) library to work. You can install this dependency via:
+
+```
+$ pip install -r requirements.txt
+```
+
 ### I found a bug !
 
 Please send it to us and we will try and fix it. If you could reproduce the issue using the `--debug` command line switch to get some extra info for you report that would be awesome and very much appreciated.
