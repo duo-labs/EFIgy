@@ -398,11 +398,30 @@ class EFIgyCli(object):
         Get versions of EFI, Boot ROM, OS & Mac Device as well as the SysUUID
         :return:
         """
-        ##Get  Mac model ID, EFI & SMC ROM versions
-        self.hw_version  = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice")), "model", None, 0)).replace("\x00", "")
-        self.smc_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("AppleSMC")),"smc-version", None, 0))
-        raw_efi = str(IORegistryEntryCreateCFProperty(IORegistryEntryFromPath(0, "IODeviceTree:/rom"), "version", None, 0)).replace("\x00", "").split(".")
-        self.efi_version = "%s.%s.%s" % (raw_efi[0], raw_efi[2], raw_efi[3])
+        ##Get  Mac model ID
+        self.hw_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("IOPlatformExpertDevice")), "model", None, 0)).replace("\x00", "")
+
+        if "imacpro" in self.hw_version.lower():
+            ##iMac Pro stores it's EFI data different due it's new architecture so grab the EFI & SMC ROM versions appropriately
+            raw_efi_list = []
+            raw_rom_info = str(IORegistryEntryCreateCFProperty(IORegistryEntryFromPath(0, "IODeviceTree:/rom"), "apple-rom-info", None, 0))
+            for data in raw_rom_info.split("\n"):
+                if data.strip().startswith("BIOS ID"):
+                    raw_efi_list = data.split(":")[1].strip().split(".")
+                    break
+            else:
+                self.message("[-] Could not find raw EFI data to determine EFI versions. Exiting....")
+                return False
+
+            self.efi_version = "%s.%s.%s"%(raw_efi_list[0], raw_efi_list[2], raw_efi_list[3])
+            #Can't currently find the SMC version like this on imac pros ....
+            #self.smc_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("AppleSMC")), "smc-version", None, 0))
+            self.smc_version = ""
+        else:
+            ##EFI & SMC ROM versions
+            self.smc_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("AppleSMC")),"smc-version", None, 0))
+            raw_efi = str(IORegistryEntryCreateCFProperty(IORegistryEntryFromPath(0, "IODeviceTree:/rom"), "version", None, 0)).replace("\x00", "").split(".")
+            self.efi_version = "%s.%s.%s" % (raw_efi[0], raw_efi[2], raw_efi[3])
 
         ##Set the salt to be the MAC address of the system, using the MAC as a salt in this manner
         ## helps ensure that the hashed sysuuid is pseudonymous. We don't want to know the sysuuid's
