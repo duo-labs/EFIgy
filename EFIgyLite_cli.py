@@ -85,11 +85,12 @@ class EFIgyCliError(Exception):
 class EFIgyCli(object):
 
 
-    def __init__(self, api_server_url, quiet=False, debug=False, log_path="", json_results="", batch_json_path="", cacert_path="", only_efi=False):
+    def __init__(self, api_server_url, quiet=False, debug=False, log_path="", json_results="", batch_json_path="", cacert_path="", only_efi=False, yes=False):
 
         ##Display options
         self.quiet = quiet
         self.debug = debug
+        self.yes = yes
 
         ##set up logging
         self.log_fo = None
@@ -349,7 +350,7 @@ class EFIgyCli(object):
                 self.message("\tBuild Number     : %s" % (sys_info.get("build_num")))
 
                 ##If running in single system mode and we haven't been told to be silent ask if it's OK to send data
-                if not self.batch_json_path and not self.quiet:
+                if not self.batch_json_path and not (self.quiet or self.yes):
                     agree = raw_input("\n[?] Do you want to continue and submit this request? [Y/N]  ").upper()
                     if agree not in ["Y", "YES"]:
                         self.message("[-] OK! Not sending request to the API. Exiting.....")
@@ -561,14 +562,25 @@ class EFIgyCli(object):
             ##This is kind messy but it's so as we can detect newer and older firmware and message accordingly rather than just looking for 'different' versions
             ## the way that EFI versions are denoted by Apple makes this more of a pain thatit really needs to be quite honestly
             api_efi_str =  api_results["latest_efi_version"]["msg"].split(".")
+            my_efi_str  = sys_info.get("rom_ver").split(".")
+
             api_efi_ver = int(api_efi_str[1], 16)
             api_efi_build = int(api_efi_str[2].replace("B",""), 16)
 
-            my_efi_str  = sys_info.get("rom_ver").split(".")
-            my_efi_ver = int(my_efi_str[1], 16)
-            my_efi_build = int(my_efi_str[2].replace("B", ""), 16)
+            if all([x.isdigit() for x in my_efi_str]):
+                # Newer EFI versions do not include a build number
+                # or the Mac model code. The output will be something
+                # like 256.0.0, whereas with the old format it would
+                # be MBP133.0256.B00.
+                my_efi_ver = int(my_efi_str[0], 16)
+                my_efi_build = 0
+            else:
+                my_efi_ver = int(my_efi_str[1], 16)
+                my_efi_build = int(my_efi_str[2].replace("B", ""), 16)
 
             if api_efi_str == my_efi_str:
+                self.message("\t\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s"%(sys_info.get("rom_ver"), sys_info.get("build_num"), sys_info.get("hw_ver")))
+            elif my_efi_ver == api_efi_ver and my_efi_build == api_efi_build:
                 self.message("\t\t[+] SUCCESS - The EFI Firmware you are running (%s) is the expected version for the OS build you have installed (%s) on your %s"%(sys_info.get("rom_ver"), sys_info.get("build_num"), sys_info.get("hw_ver")))
 
             elif (my_efi_ver > api_efi_ver) or (my_efi_ver > api_efi_ver and my_efi_build > api_efi_build) or (my_efi_ver == api_efi_ver and my_efi_build > api_efi_build):
@@ -660,6 +672,7 @@ if __name__ == "__main__":
     parser.add_argument("--debug",  action="store_true", default=False, help="Show verbose debugging output to stdout")
     parser.add_argument("-q", "--quiet",  action="store_true", default=False, help="Silence stdout output and don't ask to submit data to API. Use with the --log option")
     parser.add_argument("-v", "--version", action="store_true", default=False, help="Show client version")
+    parser.add_argument("-y", "--yes", action="store_true", default=False, help="Assume an answer of 'yes' when submitting data to the EFIgy API.")
 
     args = parser.parse_args()
 
@@ -675,7 +688,7 @@ if __name__ == "__main__":
 
     try:
         ##Connect to specified EFIgy API server
-        efigy_cli = EFIgyCli(args.api_server, quiet=args.quiet, debug=args.debug, log_path=args.log, json_results=args.json_output, batch_json_path=args.batch, cacert_path=args.cacert_path, only_efi=args.only_efi)
+        efigy_cli = EFIgyCli(args.api_server, quiet=args.quiet, debug=args.debug, log_path=args.log, json_results=args.json_output, batch_json_path=args.batch, cacert_path=args.cacert_path, only_efi=args.only_efi, yes=args.yes)
         efigy_cli()
 
         sys.exit(0)
