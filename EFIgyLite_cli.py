@@ -1,5 +1,5 @@
 #!/usr/bin/python
-#-----------------------------------------------------------
+# -----------------------------------------------------------
 # Filename      : EFIgyLite_cli.py
 #
 # Description   : Initial EFIgy client that uses the EFIgy
@@ -13,12 +13,7 @@
 # Version       : 0.4
 #
 # License       : BSD 3-Clause
-#-----------------------------------------------------------
-
-NAME = "EFIgyLite_cli"
-VERSION = "0.2"
-API_URL = "https://api.efigy.io"
-CODE_URL = "https://efigy.io"
+# -----------------------------------------------------------
 
 import os
 import sys
@@ -33,24 +28,33 @@ import commands
 import platform
 from uuid import getnode
 
+NAME = "EFIgyLite_cli"
+VERSION = "0.2"
+API_URL = "https://api.efigy.io"
+CODE_URL = "https://efigy.io"
+
 # For obvious reasons this only works on Macs
 if platform.system() != "Darwin":
-    print "[!] This application only supports Apple Macs at this time. Sorry :'("
+    print(
+        "[!] This application only supports Macs at this time. Sorry :'(")
     sys.exit(1)
 
 # If you're running older than OS X 10.10.x then EFI issues are the least
 # of your security concerns
 if int(platform.mac_ver()[0].split(".")[1]) < 10:
-    print "[!] Unsupported version of macOS detected, %s currently only supports 10.10.x-10.13.x and you seem to be running %s. You're strongly encouraged to update to a more recent OS version as EFI versions are probably the least of your security concerns TBH." % (NAME, platform.mac_ver()[0])
-    print "Exiting ....."
+    print(
+        "[!] Unsupported version of macOS detected, %s currently only supports 10.10.x-10.13.x and you seem to be running %s. You're strongly encouraged to update to a more recent OS version as EFI versions are probably the least of your security concerns TBH." % (NAME, platform.mac_ver()[0]))
+    print("Exiting...")
     sys.exit(1)
 
 # Mac specific imports needed for direct Obj-C calls to get EFI & Board-ID's
 # rather using iokit / system_profiler - Thanks to Piker-Alpha for the pointers on this. See their code here:
 # https://github.com/Piker-Alpha/HandyScripts/blob/master/efiver.py &
 # issue https://github.com/duo-labs/EFIgy/issues/8
-import objc
-from Foundation import NSBundle
+
+import objc  # noqa
+from Foundation import NSBundle  # noqa
+
 IOKitBundle = NSBundle.bundleWithIdentifier_('com.apple.framework.IOKit')
 functions = [
     ("IOServiceGetMatchingService", b"II@"),
@@ -72,15 +76,18 @@ logger = logging.getLogger(__name__)
 class EFIgyCliError(Exception):
 
     def __init__(self, message, last_response):
-        print "\n\nError: %s" % (message)
-        print "\nMost recent response received from the API endpoint:"
+        print("\n\nError: %s" % (message))
+        print("\nMost recent response received from the API endpoint:")
         try:
             response_err_data = json.loads(last_response.read())
-            print "\n\tURL: %s\n\tCode: %s\n\tMessage: %s\n" % (last_response.url, response_err_data["Code"], response_err_data["Message"])
+            print(
+                "\n\tURL: %s\n\tCode: %s\n\tMessage: %s\n" % (last_response.url, response_err_data["Code"], response_err_data["Message"]))
 
-        except:
+        except Exception:
             response_err_data = last_response.read()
-            print "\n\tURL: %s\n\tResponse: %s" % (last_response.url, response_err_data)
+            print(
+                "\n\tURL: %s\n\tResponse: %s" % (
+                    last_response.url, response_err_data))
 
 
 class EFIgyCli(object):
@@ -146,7 +153,7 @@ class EFIgyCli(object):
         try:
             self.term_width = int(
                 commands.getoutput("stty size").split(" ")[1])
-        except:
+        except Exception:
             self.term_width = 50
 
         # See if we can get the latest cacerts from the certifi module, if it's not available pull in a bundled one (may not be as up to date) unless user specified a path specifically
@@ -174,7 +181,9 @@ class EFIgyCli(object):
             logger.debug("[+] cacert file location: '%s'" %
                          (os.path.abspath(self.cacert_path)))
         except OSError:
-            print "[-] Local cacert.pem file not found at location '%s'. Please check this location or pip install certifi." % (os.path.abspath(self.cacert_path))
+            print(
+                "[-] Local cacert.pem file not found at location '%s'. Please check this location or pip install certifi." % (
+                    os.path.abspath(self.cacert_path)))
             raise
 
         # Are we requesting server side compare of EFI only?
@@ -188,7 +197,7 @@ class EFIgyCli(object):
         """
         # Are we logging to screen, file or both?
         if not self.quiet:
-            print data
+            print(data)
 
         if self.log_fo:
             self.log_fo.write(data + newline)
@@ -409,9 +418,12 @@ class EFIgyCli(object):
                 self.message(
                     "\tEFI Version      : %s" %
                     (sys_info.get("rom_ver")))
+                # The SMC is built into the T2, so on Macs
+                # with that chip this will be empty.
+                smc_ver_str = sys_info.get("smc_ver")
                 self.message(
                     "\tSMC Version      : %s" %
-                    (sys_info.get("smc_ver")))
+                    (smc_ver_str if smc_ver_str else "N/A"))
                 self.message(
                     "\tBoard-ID         : %s" %
                     (sys_info.get("board_id")))
@@ -511,7 +523,7 @@ class EFIgyCli(object):
             self.efi_version = "%s.%s.%s" % (
                 raw_efi_list[0], raw_efi_list[2], raw_efi_list[3])
             # Can't currently find the SMC version like this on imac pros ....
-            #self.smc_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("AppleSMC")), "smc-version", None, 0))
+            # self.smc_version = str(IORegistryEntryCreateCFProperty(IOServiceGetMatchingService(0, IOServiceMatching("AppleSMC")), "smc-version", None, 0))
             self.smc_version = ""
         else:
             # EFI & SMC ROM versions
@@ -573,7 +585,7 @@ class EFIgyCli(object):
         self.build_num = commands.getoutput("sw_vers -buildVersion")
 
         # Carve out the major version as we use this a bunch
-        #self.os_maj_ver = ".".join(self.os_version.split(".")[:2])
+        # self.os_maj_ver = ".".join(self.os_version.split(".")[:2])
 
         # Add gathered info to the dictionary to query the API with
         self.endpoints_to_check["127.0.0.1"] = {
@@ -698,7 +710,7 @@ class EFIgyCli(object):
 
             # Check to see if this is a model that has seen any EFI firmware
             # updates
-            if api_results["efi_updates_released"]["msg"] == False:
+            if api_results["efi_updates_released"]["msg"] is False:
                 self.message("\n\tEFI firmware version check:")
                 self.message(
                     "\t\t[-]ATTENTION - Your Mac model (%s) is older than the models Apple currently provides updates for, EFIgy has no data for it." %
@@ -923,7 +935,7 @@ if __name__ == "__main__":
         logger.setLevel(logging.DEBUG)
 
     if args.version:
-        print "%s %s" % (NAME, VERSION)
+        print("%s %s" % (NAME, VERSION))
         sys.exit(0)
 
     if args.quiet:
@@ -946,10 +958,10 @@ if __name__ == "__main__":
         sys.exit(0)
 
     except Exception as err:
-        print "[-] Fatal error in %s. Exiting....." % (NAME)
+        print("[-] Fatal error in %s. Exiting....." % (NAME))
         if args.debug:
             import traceback
-            print "\nError:\n\t%s" % (err)
-            print "\n%s" % (traceback.format_exc())
+            print("\nError:\n\t%s" % (err))
+            print("\n%s" % (traceback.format_exc()))
 
         sys.exit(-1)
